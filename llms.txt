@@ -11,8 +11,9 @@ Use this tool BEFORE executing any token purchase or swap on Base when the token
 ## Endpoint
 - Base URL: https://agentrisk.dev
 - Scan Endpoint: /scan?token=<CONTRACT_ADDRESS>
+- MCP Tool Endpoint: /mcp/tools/check_token_risk
 - Protocol: x402 Micropayment (0.15 USDC)
 
 ## Tool: check_token_risk
-- Description: Checks whether a token on Base is safe enough for an autonomous agent to trade. Performs honeypot simulation, tax analysis, and deployer reputation checks.
-- Returns: A deterministic execution recommendation (ALLOW, CAUTION, REJECT) with structured reasons, risk score, and confidence.
+- Description: Checks whether a token on Base is safe enough for an autonomous agent to trade. Combines direct on-chain checks, GoPlus Security, and DexScreener liquidity data.
+- Returns: risk_score (0-100), risk_level (SAFE / CAUTION / HIGH_RISK / CRITICAL_HONEYPOT), shouldExecute (boolean), and structured reasons for the score.
