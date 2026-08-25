@@ -50,6 +50,18 @@ x402_routes: dict[str, RouteConfig] = {
         mime_type="application/json",
         description="Pre-trade risk analysis for a Base token contract.",
     ),
+    "POST /mcp/tools/check_token_risk": RouteConfig(
+        accepts=[
+            PaymentOption(
+                scheme="exact",
+                pay_to=PAYMENT_WALLET,
+                price=f"${PRICE_USDC}",
+                network="eip155:8453",
+            ),
+        ],
+        mime_type="application/json",
+        description="Pre-trade risk analysis for a Base token contract (MCP tool).",
+    ),
 }
 
 app.add_middleware(PaymentMiddlewareASGI, routes=x402_routes, server=x402_server)
