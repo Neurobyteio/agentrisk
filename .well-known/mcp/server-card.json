@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "name": "agentriskm2m",
+  "description": "Pre-Trade Decision API and Security Engine for Autonomous AI Agents on Base.",
+  "repository": "https://github.com/Neurobyteio/agentrisk",
+  "transport": "http",
+  "endpoint": "https://agentrisk.dev",
+  "tools": [
+    {
+      "name": "check_token_risk",
+      "description": "Checks whether a token on Base is safe enough for an autonomous agent to trade. Returns ALLOW, CAUTION, or REJECT."
+    }
+  ]
+}

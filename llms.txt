@@ -1,0 +1,18 @@
+# AgentRisk M2M
+
+> Pre-Trade Decision API for Autonomous Agents operating on Base.
+
+## Overview
+AgentRisk M2M provides programmatic, machine-readable security decisions for autonomous AI agents before they execute on-chain token swaps or purchases.
+
+## When to Use
+Use this tool BEFORE executing any token purchase or swap on Base when the token contract is unknown or untrusted.
+
+## Endpoint
+- Base URL: https://agentrisk.dev
+- Scan Endpoint: /scan?token=<CONTRACT_ADDRESS>
+- Protocol: x402 Micropayment (0.15 USDC)
+
+## Tool: check_token_risk
+- Description: Checks whether a token on Base is safe enough for an autonomous agent to trade. Performs honeypot simulation, tax analysis, and deployer reputation checks.
+- Returns: A deterministic execution recommendation (ALLOW, CAUTION, REJECT) with structured reasons, risk score, and confidence.

@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentrisk-base-v1"
+version = "1.0.0"
+description = "Token risk scoring and honeypot detection API for Base Network"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = ["httpx>=0.24.0"]
+keywords = ["base", "crypto", "honeypot", "security", "ai-agent", "x402"]

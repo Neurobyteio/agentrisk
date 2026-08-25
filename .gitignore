@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+track_record.db
+bot.log
+sweeper.log
+venv/

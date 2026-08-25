@@ -1,0 +1,20 @@
+{
+  "name": "AgentRisk AI Threat Engine",
+  "description": "Autonomous AI Risk & Threat Detection Engine for Web3 tokens, contracts and agent payloads.",
+  "version": "1.0.0",
+  "protocol": "x402",
+  "homepage": "https://github.com/Neurobyteio/agentrisk",
+  "endpoint": "http://104.197.69.115/v1/analyze",
+  "schema_url": "http://104.197.69.115/openapi.json",
+  "payment": {
+    "network": "base",
+    "token": "USDC",
+    "amount": "0.15",
+    "address": "0x37dd7D63A9C11Af4e43bB874bb81Ae8bECEAB035"
+  },
+  "capabilities": [
+    "risk_scoring",
+    "honeypot_detection",
+    "threat_analysis"
+  ]
+}

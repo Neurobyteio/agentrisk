@@ -1,0 +1,28 @@
+{
+  "name": "agentrisk-sdk",
+  "version": "1.0.0",
+  "description": "Official JS/TS SDK for AgentRisk API (Base Network Token Risk Scoring)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": [
+    "base",
+    "crypto",
+    "honeypot",
+    "security",
+    "ai-agent",
+    "x402",
+    "web3"
+  ],
+  "author": "AgentRisk Team",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  }
+}

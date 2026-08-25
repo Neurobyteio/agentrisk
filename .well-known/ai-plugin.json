@@ -1,0 +1,15 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "AgentRisk Web3 Security",
+  "name_for_model": "agentrisk",
+  "description_for_human": "Real-time AI Threat & Risk Scoring Engine for Web3 contracts and tokens.",
+  "description_for_model": "Plugin for checking Web3 smart contract risks, honeypots, and token threats using x402 protocol.",
+  "auth": { "type": "none" },
+  "api": {
+    "type": "openapi",
+    "url": "http://104.197.69.115/openapi.json"
+  },
+  "logo_url": "http://104.197.69.115/logo.png",
+  "contact_email": "support@neurobyte.io",
+  "legal_info_url": "https://github.com/Neurobyteio/agentrisk"
+}
