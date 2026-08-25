@@ -1,0 +1,8 @@
+{
+  "name": "AgentRisk AI Threat Engine",
+  "description": "Autonomous AI Risk & Threat Detection Engine for Web3 tokens and contracts.",
+  "protocol": "x402",
+  "endpoint": "https://agentrisk.dev/scan",
+  "price_usdc": "0.15",
+  "wallet": "0x72C296742Ef55b8cCF50a11b3ac5cB25834A6FE5"
+}
