@@ -8,15 +8,20 @@ test_x402_client.py
 import asyncio
 import base64
 import json
+import os
 
+from dotenv import load_dotenv
 from eth_account import Account
 from x402 import x402Client
 from x402.http.clients import x402HttpxClient
 from x402.mechanisms.evm import EthAccountSigner
 from x402.mechanisms.evm.exact.register import register_exact_evm_client
 
-# Вставьте сюда приватный ключ вашего тестового кошелька (тот, что скопировали)
-PRIVATE_KEY = "0xc13f4fa668ed4360809f195bc70616f1d5e4ba43ff009a270059282993269c78"
+load_dotenv()
+
+PRIVATE_KEY = os.environ.get("TEST_PAYER_PRIVATE_KEY")
+if not PRIVATE_KEY:
+    raise RuntimeError("TEST_PAYER_PRIVATE_KEY not set in .env")
 
 TARGET_URL = "https://agentrisk.dev/scan?token=0x4200000000000000000000000000000000000006"
 
