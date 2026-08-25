@@ -89,6 +89,14 @@ async def scan_token(token: str, request: Request):
             should_execute=should_execute,
             is_honeypot=bool(report.is_honeypot),
         )
+
+        if report.creator_address:
+            tracker.log_deployer(
+                deployer_address=report.creator_address,
+                token_address=token,
+                risk_score=report.risk_score,
+                is_honeypot=bool(report.is_honeypot),
+            )
         return report
     except Exception as e:
         logger.error(f"Analysis error for {token}: {e}")

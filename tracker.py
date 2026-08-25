@@ -19,8 +19,56 @@ def init_db():
             is_honeypot BOOLEAN
         )
     ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS deployers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp INTEGER,
+            deployer_address TEXT,
+            token_address TEXT,
+            risk_score INTEGER,
+            is_honeypot BOOLEAN
+        )
+    ''')
     conn.commit()
     conn.close()
+
+
+def log_deployer(deployer_address, token_address, risk_score, is_honeypot):
+    if not deployer_address:
+        return
+    try:
+        init_db()
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO deployers (timestamp, deployer_address, token_address, risk_score, is_honeypot) VALUES (?, ?, ?, ?, ?)",
+            (int(time.time()), deployer_address.lower(), token_address, risk_score, is_honeypot)
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Deployer tracking error: {e}")
+
+
+def get_deployer_history(deployer_address):
+    if not deployer_address:
+        return {"previous_tokens": 0, "previous_honeypots": 0}
+    try:
+        init_db()
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        addr = deployer_address.lower()
+
+        cursor.execute("SELECT COUNT(DISTINCT token_address) FROM deployers WHERE deployer_address = ?", (addr,))
+        previous_tokens = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM deployers WHERE deployer_address = ? AND is_honeypot = 1", (addr,))
+        previous_honeypots = cursor.fetchone()[0]
+
+        conn.close()
+        return {"previous_tokens": previous_tokens, "previous_honeypots": previous_honeypots}
+    except Exception as e:
+        return {"previous_tokens": 0, "previous_honeypots": 0, "error": str(e)}
 
 def log_scan(address: str, risk_score: int, risk_level: str, should_execute: bool, is_honeypot: bool):
     try:

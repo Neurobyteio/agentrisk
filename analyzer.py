@@ -144,6 +144,7 @@ class RiskReport:
     holder_count: Optional[int] = None
     top10_holder_pct: Optional[float] = None
     creator_pct: Optional[float] = None
+    creator_address: Optional[str] = None
 
     data_sources: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
@@ -415,6 +416,10 @@ class TokenAnalyzer:
         creator_pct = _float("creator_percent")
         if creator_pct is not None:
             report.creator_pct = round(creator_pct * 100, 4)
+
+        creator_addr = token_data.get("creator_address")
+        if creator_addr:
+            report.creator_address = creator_addr
 
         lp_holders = token_data.get("lp_holders") or []
         if lp_holders and report.lp_locked_or_burned is None:
