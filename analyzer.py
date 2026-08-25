@@ -763,4 +763,3 @@ class TokenAnalyzer:
     async def deep_scan(self, address: str) -> RiskReport:
         return await self.analyze(address, deep=True)
 
-import deployer_analyzer
