@@ -169,6 +169,19 @@ def _check_brand_impersonation(name: str, symbol: str) -> str | None:
     return None
 
 
+async def _check_deployer_freshness(rpc_manager, deployer_address: str) -> int | None:
+    """Returns the transaction count (nonce) of the deployer wallet, or None if unavailable."""
+    if not deployer_address:
+        return None
+    try:
+        async def _op(w3):
+            checksum = w3.to_checksum_address(deployer_address)
+            return await w3.eth.get_transaction_count(checksum)
+        return await rpc_manager.call_with_fallback(_op)
+    except Exception:
+        return None
+
+
 class TokenAnalyzer:
     """
     Runs a full multi-source risk audit for a given ERC-20 token address on
@@ -784,6 +797,18 @@ class TokenAnalyzer:
                     weight=10,
                 )
             )
+
+        if report.creator_address:
+            deployer_nonce = await _check_deployer_freshness(self.rpc_manager, report.creator_address)
+            if deployer_nonce is not None and deployer_nonce <= 3:
+                report.findings.append(
+                    RiskFinding(
+                        code="FRESH_DEPLOYER_WALLET",
+                        severity="medium",
+                        message=f"Deployer wallet has only {deployer_nonce} prior transaction(s) — this may be a newly created wallet used for a one-off token launch.",
+                        weight=10,
+                    )
+                )
 
         self._score(report)
         return report
