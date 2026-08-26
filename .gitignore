@@ -6,3 +6,5 @@ bot.log
 sweeper.log
 venv/
 node_modules/
+.mcpregistry_github_token
+.mcpregistry_registry_token
