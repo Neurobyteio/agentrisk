@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
@@ -193,6 +194,8 @@ class TokenAnalyzer:
         self.rpc_manager = rpc_manager
         self._external_client = http_client
         self._owns_client = http_client is None
+        self._cache: dict[str, tuple[float, "RiskReport"]] = {}
+        self._cache_ttl_seconds = 300
 
     async def _get_client(self) -> httpx.AsyncClient:
         if self._external_client is not None:
@@ -785,6 +788,14 @@ class TokenAnalyzer:
 
     async def analyze(self, address: str, deep: bool = True) -> RiskReport:
         checksum_address = self.validate_address(address)
+
+        cache_key = f"{checksum_address}:{deep}"
+        cached = self._cache.get(cache_key)
+        if cached is not None:
+            cached_at, cached_report = cached
+            if (time.time() - cached_at) < self._cache_ttl_seconds:
+                return cached_report
+
         report = RiskReport(address=checksum_address)
 
         onchain_meta_task = asyncio.create_task(self._fetch_onchain_metadata(checksum_address, report))
@@ -844,6 +855,7 @@ class TokenAnalyzer:
 
         self._score(report)
         report.verdict = self._build_verdict(report)
+        self._cache[cache_key] = (time.time(), report)
         return report
 
     async def quick_scan(self, address: str) -> RiskReport:
