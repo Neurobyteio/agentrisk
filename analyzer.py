@@ -152,6 +152,7 @@ class RiskReport:
 
     risk_score: int = 0
     risk_level: RiskLevel = RiskLevel.CAUTION
+    verdict: str = ""
 
 
 KNOWN_BRANDS = [
@@ -766,6 +767,22 @@ class TokenAnalyzer:
     # Public entry points
     # ------------------------------------------------------------------ #
 
+    def _build_verdict(self, report: RiskReport) -> str:
+        level = report.risk_level.value
+        reasons = [f.message.rstrip(".") for f in report.findings[:2]]
+        reason_text = "; ".join(reasons) if reasons else "no significant issues found"
+
+        if level == "CRITICAL_HONEYPOT":
+            prefix = "DO NOT TRADE"
+        elif level == "HIGH_RISK":
+            prefix = "HIGH RISK — avoid unless you understand the tradeoffs"
+        elif level == "CAUTION":
+            prefix = "PROCEED WITH CAUTION"
+        else:
+            prefix = "LOOKS SAFE"
+
+        return f"{prefix}. {reason_text}."
+
     async def analyze(self, address: str, deep: bool = True) -> RiskReport:
         checksum_address = self.validate_address(address)
         report = RiskReport(address=checksum_address)
@@ -826,6 +843,7 @@ class TokenAnalyzer:
                 )
 
         self._score(report)
+        report.verdict = self._build_verdict(report)
         return report
 
     async def quick_scan(self, address: str) -> RiskReport:
