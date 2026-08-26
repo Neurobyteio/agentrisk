@@ -783,7 +783,22 @@ class TokenAnalyzer:
 
         if deep and report.is_contract:
             try:
+                lp_status_before = report.lp_locked_or_burned
                 await self._check_lp_burn_onchain(report)
+                lp_status_after = report.lp_locked_or_burned
+                if (
+                    lp_status_before is not None
+                    and lp_status_after is not None
+                    and lp_status_before != lp_status_after
+                ):
+                    report.findings.append(
+                        RiskFinding(
+                            code="DATA_SOURCE_DISAGREEMENT",
+                            severity="high",
+                            message=f"Data sources disagree on LP lock status: third-party API says {lp_status_before}, direct on-chain check says {lp_status_after}. Treat with caution.",
+                            weight=20,
+                        )
+                    )
             except Exception as exc:  # noqa: BLE001
                 report.warnings.append(f"LP burn verification failed: {exc}")
 
