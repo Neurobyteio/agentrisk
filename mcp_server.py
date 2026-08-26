@@ -11,12 +11,46 @@ mcp_router = APIRouter()
 @mcp_router.post("/mcp/manifest")
 async def mcp_initialize(payload: dict):
     """
-    MCP protocol handshake (JSON-RPC 'initialize' method).
-    Required for clients/scanners like Smithery that POST to discover the server.
+    MCP protocol JSON-RPC handler. Responds differently depending on the
+    requested method, as required by scanners/clients like Smithery.
     """
+    method = payload.get("method", "")
+    req_id = payload.get("id", 1)
+
+    if method == "tools/list":
+        return {
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "result": {
+                "tools": [
+                    {
+                        "name": "check_token_risk",
+                        "description": "Checks whether a token on Base is safe enough for an autonomous agent to trade. Returns riskScore, riskLevel, and shouldExecute with structured reasons. Requires x402 payment.",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "token_address": {
+                                    "type": "string",
+                                    "description": "Base contract address (0x...)"
+                                }
+                            },
+                            "required": ["token_address"]
+                        }
+                    }
+                ]
+            }
+        }
+
+    if method == "resources/list":
+        return {"jsonrpc": "2.0", "id": req_id, "result": {"resources": []}}
+
+    if method == "prompts/list":
+        return {"jsonrpc": "2.0", "id": req_id, "result": {"prompts": []}}
+
+    # Default: treat as "initialize"
     return {
         "jsonrpc": "2.0",
-        "id": payload.get("id", 1),
+        "id": req_id,
         "result": {
             "protocolVersion": "2024-11-05",
             "capabilities": {
