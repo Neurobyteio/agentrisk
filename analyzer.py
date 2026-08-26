@@ -154,6 +154,21 @@ class RiskReport:
     risk_level: RiskLevel = RiskLevel.CAUTION
 
 
+KNOWN_BRANDS = [
+    "apple", "google", "meta", "nvidia", "tesla", "amazon", "microsoft",
+    "netflix", "alphabet", "openai", "coinbase", "binance", "visa",
+    "mastercard", "paypal", "disney", "samsung", "intel", "amd",
+]
+
+
+def _check_brand_impersonation(name: str, symbol: str) -> str | None:
+    text = f"{name} {symbol}".lower()
+    for brand in KNOWN_BRANDS:
+        if brand in text:
+            return brand
+    return None
+
+
 class TokenAnalyzer:
     """
     Runs a full multi-source risk audit for a given ERC-20 token address on
@@ -758,6 +773,17 @@ class TokenAnalyzer:
                 await self._check_lp_burn_onchain(report)
             except Exception as exc:  # noqa: BLE001
                 report.warnings.append(f"LP burn verification failed: {exc}")
+
+        matched_brand = _check_brand_impersonation(report.name or "", report.symbol or "")
+        if matched_brand:
+            report.findings.append(
+                RiskFinding(
+                    code="POSSIBLE_BRAND_IMPERSONATION",
+                    severity="medium",
+                    message=f"Token name/symbol resembles '{matched_brand.title()}'. This may be an unofficial or impersonating token — verify the issuer before trusting the brand name.",
+                    weight=10,
+                )
+            )
 
         self._score(report)
         return report
