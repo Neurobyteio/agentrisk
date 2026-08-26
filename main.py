@@ -74,6 +74,12 @@ app.add_middleware(PaymentMiddlewareASGI, routes=x402_routes, server=x402_server
 from fastapi.staticfiles import StaticFiles
 import os
 
+from fastapi.responses import FileResponse
+
+@app.get("/favicon.ico")
+async def favicon():
+    return FileResponse("favicon.ico")
+
 os.makedirs(".well-known/mcp", exist_ok=True)
 app.mount("/.well-known", StaticFiles(directory=".well-known"), name="well-known")
 @app.get("/scan")
