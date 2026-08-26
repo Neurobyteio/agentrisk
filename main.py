@@ -21,6 +21,10 @@ app = FastAPI(
     title="AgentRisk M2M Security API",
     description="Autonomous AI Agent for Real-time Risk Scoring. Accepts x402 Micropayments.",
     version="1.0.0",
+    contact={
+        "name": "AgentRisk",
+        "email": "m2m@agentrisk.dev",
+    },
 )
 
 PAYMENT_WALLET = "0x72C296742Ef55b8cCF50a11b3ac5cB25834A6FE5"
