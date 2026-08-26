@@ -8,6 +8,28 @@ from rpc_manager import RPCManager
 mcp_router = APIRouter()
 
 
+@mcp_router.post("/mcp/manifest")
+async def mcp_initialize(payload: dict):
+    """
+    MCP protocol handshake (JSON-RPC 'initialize' method).
+    Required for clients/scanners like Smithery that POST to discover the server.
+    """
+    return {
+        "jsonrpc": "2.0",
+        "id": payload.get("id", 1),
+        "result": {
+            "protocolVersion": "2024-11-05",
+            "capabilities": {
+                "tools": {}
+            },
+            "serverInfo": {
+                "name": "AgentRisk M2M",
+                "version": "1.0.0"
+            }
+        }
+    }
+
+
 class TokenCheckRequest(BaseModel):
     token_address: str
 
