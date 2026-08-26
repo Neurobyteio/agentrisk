@@ -35,8 +35,14 @@ from x402.http.types import RouteConfig
 from x402.mechanisms.evm.exact import ExactEvmServerScheme
 from x402.server import x402ResourceServer
 
+from x402.http import HTTPFacilitatorClient
+from cdp.x402 import create_facilitator_config
+
 x402_facilitator = HTTPFacilitatorClient(
-    FacilitatorConfig(url="http://localhost:8080")
+    create_facilitator_config(
+        api_key_id=os.environ.get("CDP_API_KEY_ID"),
+        api_key_secret=os.environ.get("CDP_API_KEY_SECRET"),
+    )
 )
 x402_server = x402ResourceServer(x402_facilitator)
 x402_server.register("eip155:8453", ExactEvmServerScheme())
