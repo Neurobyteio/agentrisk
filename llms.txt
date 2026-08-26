@@ -16,4 +16,5 @@ Use this tool BEFORE executing any token purchase or swap on Base when the token
 
 ## Tool: check_token_risk
 - Description: Checks whether a token on Base is safe enough for an autonomous agent to trade. Combines direct on-chain checks, GoPlus Security, and DexScreener liquidity data.
-- Returns: risk_score (0-100), risk_level (SAFE / CAUTION / HIGH_RISK / CRITICAL_HONEYPOT), shouldExecute (boolean), and structured reasons for the score.
+- Returns: risk_score (0-100), risk_level (SAFE / CAUTION / HIGH_RISK / CRITICAL_HONEYPOT), verdict (one-sentence human-readable summary), shouldExecute (boolean), and structured reasons for the score.
+- Additional checks: deployer wallet freshness, brand impersonation detection, and data source disagreement flagging.

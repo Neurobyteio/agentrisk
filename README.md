@@ -19,12 +19,21 @@ Before your bot executes a `swap()` on Uniswap or Aerodrome, it pings AgentRisk.
 {
   "riskScore": 20,
   "riskLevel": "CAUTION",
+  "verdict": "PROCEED WITH CAUTION. Top 10 holders control 51.8% of supply.",
   "shouldExecute": true,
   "reasons": [
     "Top 10 holders control 51.8% of supply."
   ]
 }
 ```
+
+## What Makes This Different
+
+- **Deployer wallet freshness** — flags newly-created wallets used for one-off token launches
+- **Brand impersonation detection** — flags tokens named after known companies (Apple, Google, Meta, etc.)
+- **Data source disagreement** — flags cases where third-party APIs and our own on-chain checks disagree
+- **Human-readable verdict** — one plain-English sentence, not just raw scores
+- **Sub-millisecond cached responses** — repeat scans within 5 minutes return instantly
 
 ## ⚙️ How It Works (M2M Architecture)
 
