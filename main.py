@@ -169,6 +169,13 @@ async def root():
 
             <input type="text" id="tokenAddress" placeholder="Enter contract address (0x...)">
             <button onclick="checkToken()">Test API Request</button>
+            <p style="font-size:12px;color:#64748b;margin-top:10px;margin-bottom:0;">
+                Note: this button demonstrates a real API call, but the browser can't pay automatically.
+                Clicking it will show a genuine 402 Payment Required response — this is how the API is
+                supposed to behave for a request with no payment attached. See
+                <a href="https://github.com/Neurobyteio/agentrisk" style="color:#38bdf8;">the GitHub repo</a>
+                for code that actually pays and gets a result.
+            </p>
             <div id="result"></div>
         </div>
 
@@ -183,6 +190,10 @@ async def root():
                 
                 try {
                     const response = await fetch(`/scan?token=${address}`);
+                    if (response.status === 402) {
+                        resultDiv.innerText = "This endpoint is paid via the x402 protocol (0.15 USDC on Base). A regular browser click can't complete the payment automatically \u2014 you're seeing a real 402 Payment Required response, not an error or a broken API. To actually get a result, you need an x402-aware client that can sign and send a USDC payment: a script using a library like x402-fetch (JS) or the x402 Python SDK, or an AI agent/MCP client configured with a Base wallet. See the README on GitHub for working code examples: https://github.com/Neurobyteio/agentrisk";
+                        return;
+                    }
                     const data = await response.json();
                     resultDiv.innerText = JSON.stringify(data, null, 2);
                 } catch (err) {
