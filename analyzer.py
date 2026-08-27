@@ -157,6 +157,7 @@ class RiskReport:
     risk_score: int = 0
     risk_level: RiskLevel = RiskLevel.CAUTION
     verdict: str = ""
+    confidence: str = "high"""
 
 
 KNOWN_BRANDS = [
@@ -858,6 +859,10 @@ class TokenAnalyzer:
 
         self._score(report)
         report.verdict = self._build_verdict(report)
+
+        missing_key_data = report.creator_address is None or report.lp_locked_or_burned is None
+        report.confidence = "low" if missing_key_data else "high"
+
         self._cache[cache_key] = (time.time(), report)
         return report
 
