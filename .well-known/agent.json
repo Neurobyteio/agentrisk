@@ -1,8 +1,46 @@
 {
-  "name": "AgentRisk AI Threat Engine",
-  "description": "Autonomous AI Risk & Threat Detection Engine for Web3 tokens and contracts.",
-  "protocol": "x402",
-  "endpoint": "https://agentrisk.dev/scan",
-  "price_usdc": "0.15",
-  "wallet": "0x72C296742Ef55b8cCF50a11b3ac5cB25834A6FE5"
+  "name": "AgentRisk",
+  "description": "Pre-trade risk scoring for Base tokens. Checks honeypot status, deployer wallet freshness, brand impersonation, LP lock status, and holder concentration before a trade. Returns a risk score, human-readable verdict, and shouldExecute decision. Paid per call via x402, no signup, no API keys.",
+  "url": "https://agentrisk.dev/scan",
+  "documentationUrl": "https://github.com/Neurobyteio/agentrisk",
+  "version": "1.0.0",
+  "protocolVersion": "0.3",
+  "provider": {
+    "organization": "AgentRisk",
+    "url": "https://agentrisk.dev"
+  },
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "stateTransitionHistory": false
+  },
+  "defaultInputModes": ["application/json", "text/plain"],
+  "defaultOutputModes": ["application/json"],
+  "skills": [
+    {
+      "id": "check-token-risk",
+      "name": "Base Token Risk Check",
+      "description": "Checks whether a Base token is safe to trade: honeypot detection, ownership/pausability, LP lock status cross-checked on-chain, holder concentration, deployer wallet freshness, and brand impersonation. Returns a risk score (0-100), risk level, human-readable verdict, and a confidence flag. $0.15/call.",
+      "tags": ["crypto", "base", "token-safety", "honeypot-detection", "pre-trade", "risk-scoring"],
+      "examples": [
+        "Is this token a honeypot?",
+        "Check 0x... for rug pull risk before I buy",
+        "What's the risk score for this Base token?"
+      ],
+      "inputModes": ["text/plain", "application/json"],
+      "outputModes": ["application/json"]
+    }
+  ],
+  "extensions": {
+    "x402": {
+      "networks": [
+        {"network": "eip155:8453", "currency": "USDC", "label": "Base"}
+      ],
+      "pricing": {
+        "check-token-risk": "0.15"
+      },
+      "getting_started": "1) Fund a Base wallet with USDC. 2) Use an x402 SDK (Python, JS/TS). 3) Call GET https://agentrisk.dev/scan?token=<CONTRACT_ADDRESS> — payment flows auto-handle. See https://github.com/Neurobyteio/agentrisk for integration examples.",
+      "facilitator": "https://api.cdp.coinbase.com/platform/v2/x402"
+    }
+  }
 }
