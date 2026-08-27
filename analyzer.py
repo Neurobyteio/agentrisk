@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import uuid
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -103,6 +104,8 @@ class RiskFinding:
 @dataclass
 class RiskReport:
     address: str
+    scan_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    timestamp: int = field(default_factory=lambda: int(time.time()))
     chain: str = "base"
     chain_id: int = 8453
     name: Optional[str] = None
