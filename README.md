@@ -52,7 +52,37 @@ Every response includes `cached` (boolean) and `timestamp` (unix seconds) fields
 3. Instant x402 Micropayment ($0.15 USDC instantly settled on Base — no API keys, subscriptions, or credit cards; pure machine-to-machine payment).
 4. Binary Decision: The agent receives `shouldExecute: true/false` with a risk score and structured reasons.
 
-## 🚀 Quick Integration
+## 🚀 Copy-Paste Integration (60 seconds)
+
+Install the x402 SDK, then run this — it handles payment automatically:
+
+```python
+pip install x402 eth-account
+
+import asyncio
+from eth_account import Account
+from x402 import x402Client
+from x402.http.clients import x402HttpxClient
+from x402.mechanisms.evm import EthAccountSigner
+from x402.mechanisms.evm.exact.register import register_exact_evm_client
+
+PRIVATE_KEY = "your_base_wallet_private_key"
+TOKEN_ADDRESS = "0x..."  # the token you want to check
+
+async def check_token():
+    account = Account.from_key(PRIVATE_KEY)
+    client = x402Client()
+    register_exact_evm_client(client, EthAccountSigner(account))
+    async with x402HttpxClient(client) as http:
+        response = await http.get(f"https://agentrisk.dev/scan?token={TOKEN_ADDRESS}")
+        print(response.json())
+
+asyncio.run(check_token())
+```
+
+That's it. It pays 0.15 USDC automatically and prints the risk report. Your wallet needs a small amount of USDC and ETH (for gas) on Base.
+
+## 🚀 Other Integration Options
 
 ### Option 1: MCP Server (For Claude, Cursor & Custom Agents)
 
@@ -69,12 +99,13 @@ Returns HTTP 402 with payment instructions until a valid x402 payment (0.15 USDC
 
 - **Model:** Pay-per-scan via the x402 protocol on Base Mainnet.
 - **Cost:** 0.15 USDC per comprehensive scan.
-- **Facilitator:** Self-hosted, verifies and settles payments directly on Base — no third-party account required.
+- **Facilitator:** Coinbase's official CDP facilitator — verifies and settles payments directly on Base.
 
 ## 🔎 Live Status
 
 - Agent manifest: [`/​.well-known/agent.json`](https://agentrisk.dev/.well-known/agent.json)
 - MCP manifest: [`/mcp/manifest`](https://agentrisk.dev/mcp/manifest)
 - Public track record: [`/v1/track-record`](https://agentrisk.dev/v1/track-record)
+- Listed on the [x402 Bazaar](https://x402bazaar.xyz) — discoverable by any agent searching for token safety tools
 
 Built for autonomous systems that trust math, not hype.
