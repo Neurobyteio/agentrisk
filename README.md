@@ -35,6 +35,12 @@ Before your bot executes a `swap()` on Uniswap or Aerodrome, it pings AgentRisk.
 - **Human-readable verdict** — one plain-English sentence, not just raw scores
 - **Sub-millisecond cached responses** — repeat scans within 30 seconds return instantly, with a `cached` field so you know whether a result is fresh or reused
 
+## Quick Testing with MCP Inspector
+
+Want to poke at the MCP server without writing any code? Run: npx @modelcontextprotocol/inspector
+
+Then connect it to `https://agentrisk.dev/mcp/manifest` and call `check_token_risk` directly from the UI.
+
 ## Cache Freshness Warning
 
 Every response includes `cached` (boolean) and `timestamp` (unix seconds) fields. Cached results are served for up to 30 seconds — long enough to speed up repeat lookups, short enough to catch a rug pull or a newly-enabled honeypot function in most cases. For the final safety check immediately before executing a trade, we recommend either calling with a fresh request or checking that `cached` is `false` / `timestamp` is very recent before trusting a `shouldExecute: true` result.
