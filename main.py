@@ -27,8 +27,9 @@ app = FastAPI(
     },
 )
 
-PAYMENT_WALLET = "0x72C296742Ef55b8cCF50a11b3ac5cB25834A6FE5"
+PAYMENT_WALLET = "0x42Baa7DEBbB71aFB90f14d0352F0390aE0C35ABB"
 PRICE_USDC = "0.15"
+from x402.extensions.bazaar import declare_discovery_extension, OutputConfig, bazaar_resource_server_extension
 from x402.http import FacilitatorConfig, HTTPFacilitatorClient, PaymentOption
 from x402.http.middleware.fastapi import PaymentMiddlewareASGI
 from x402.http.types import RouteConfig
@@ -46,6 +47,7 @@ x402_facilitator = HTTPFacilitatorClient(
 )
 x402_server = x402ResourceServer(x402_facilitator)
 x402_server.register("eip155:8453", ExactEvmServerScheme())
+x402_server.register_extension(bazaar_resource_server_extension)
 
 x402_routes: dict[str, RouteConfig] = {
     "GET /scan": RouteConfig(
@@ -59,6 +61,17 @@ x402_routes: dict[str, RouteConfig] = {
         ],
         mime_type="application/json",
         description="Pre-trade risk analysis for a Base token contract.",
+        resource="https://agentrisk.dev/scan",
+        extensions=declare_discovery_extension(
+            input={"token": "0x4200000000000000000000000000000000000006"},
+            input_schema={
+                "properties": {"token": {"type": "string", "description": "Base token contract address (0x...)"}},
+                "required": ["token"],
+            },
+            output=OutputConfig(
+                example={"riskScore": 20, "riskLevel": "CAUTION", "shouldExecute": True},
+            ),
+        ),
     ),
     "POST /mcp/tools/check_token_risk": RouteConfig(
         accepts=[
@@ -71,6 +84,7 @@ x402_routes: dict[str, RouteConfig] = {
         ],
         mime_type="application/json",
         description="Pre-trade risk analysis for a Base token contract (MCP tool).",
+        resource="https://agentrisk.dev/mcp/tools/check_token_risk",
     ),
 }
 
