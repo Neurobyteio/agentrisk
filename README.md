@@ -33,7 +33,11 @@ Before your bot executes a `swap()` on Uniswap or Aerodrome, it pings AgentRisk.
 - **Brand impersonation detection** — flags tokens named after known companies (Apple, Google, Meta, etc.)
 - **Data source disagreement** — flags cases where third-party APIs and our own on-chain checks disagree
 - **Human-readable verdict** — one plain-English sentence, not just raw scores
-- **Sub-millisecond cached responses** — repeat scans within 5 minutes return instantly
+- **Sub-millisecond cached responses** — repeat scans within 30 seconds return instantly, with a `cached` field so you know whether a result is fresh or reused
+
+## Cache Freshness Warning
+
+Every response includes `cached` (boolean) and `timestamp` (unix seconds) fields. Cached results are served for up to 30 seconds — long enough to speed up repeat lookups, short enough to catch a rug pull or a newly-enabled honeypot function in most cases. For the final safety check immediately before executing a trade, we recommend either calling with a fresh request or checking that `cached` is `false` / `timestamp` is very recent before trusting a `shouldExecute: true` result.
 
 ## ⚙️ How It Works (M2M Architecture)
 
