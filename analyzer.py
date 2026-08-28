@@ -157,7 +157,8 @@ class RiskReport:
     risk_score: int = 0
     risk_level: RiskLevel = RiskLevel.CAUTION
     verdict: str = ""
-    confidence: str = "high"""
+    confidence: str = "high"
+    cached: bool = False
 
 
 KNOWN_BRANDS = [
@@ -199,7 +200,7 @@ class TokenAnalyzer:
         self._external_client = http_client
         self._owns_client = http_client is None
         self._cache: dict[str, tuple[float, "RiskReport"]] = {}
-        self._cache_ttl_seconds = 300
+        self._cache_ttl_seconds = 30
 
     async def _get_client(self) -> httpx.AsyncClient:
         if self._external_client is not None:
@@ -798,6 +799,7 @@ class TokenAnalyzer:
         if cached is not None:
             cached_at, cached_report = cached
             if (time.time() - cached_at) < self._cache_ttl_seconds:
+                cached_report.cached = True
                 return cached_report
 
         report = RiskReport(address=checksum_address)
