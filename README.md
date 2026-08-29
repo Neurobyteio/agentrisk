@@ -72,6 +72,13 @@ asyncio.run(main())
 
 [PyPI page](https://pypi.org/project/agentriskm2m/)
 
+Or check a token instantly from the terminal, no code needed:
+
+```bash
+export AGENTRISK_PRIVATE_KEY=your_base_wallet_private_key
+agentriskm2m check 0xTokenAddressHere
+```
+
 ## 🚀 Copy-Paste Integration (60 seconds)
 
 Install the x402 SDK, then run this — it handles payment automatically:
