@@ -1,3 +1,16 @@
+Metadata-Version: 2.4
+Name: agentriskm2m
+Version: 1.0.0
+Summary: Pre-trade token risk scoring and honeypot detection for Base Network, paid via x402
+Project-URL: Homepage, https://agentrisk.dev
+Project-URL: Repository, https://github.com/Neurobyteio/agentrisk
+Keywords: base,crypto,honeypot,security,ai-agent,x402,token-safety,rug-pull
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: httpx>=0.24.0
+Requires-Dist: x402
+Requires-Dist: eth-account
+
 # AgentRisk Python SDK
 
 Official Python client for [AgentRisk](https://agentrisk.dev) — pre-trade token risk scoring for Base Network, paid per call via the x402 protocol.

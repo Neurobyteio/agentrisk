@@ -52,6 +52,26 @@ Every response includes `cached` (boolean) and `timestamp` (unix seconds) fields
 3. Instant x402 Micropayment ($0.15 USDC instantly settled on Base — no API keys, subscriptions, or credit cards; pure machine-to-machine payment).
 4. Binary Decision: The agent receives `shouldExecute: true/false` with a risk score and structured reasons.
 
+## 📦 Python SDK
+
+```bash
+pip install agentriskm2m
+```
+
+```python
+import asyncio
+from agentrisk import AgentRisk
+
+async def main():
+    risk = AgentRisk(private_key="your_base_wallet_private_key")
+    result = await risk.scan("0xTokenAddressHere")
+    print(result["verdict"])
+
+asyncio.run(main())
+```
+
+[PyPI page](https://pypi.org/project/agentriskm2m/)
+
 ## 🚀 Copy-Paste Integration (60 seconds)
 
 Install the x402 SDK, then run this — it handles payment automatically:
