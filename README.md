@@ -82,6 +82,78 @@ asyncio.run(check_token())
 
 That's it. It pays 0.15 USDC automatically and prints the risk report. Your wallet needs a small amount of USDC and ETH (for gas) on Base.
 
+## Framework Integration Examples
+
+### Option 1: MCP (Claude, Cursor, any MCP-compatible agent)
+
+No code needed — just point your MCP client config at:
+
+```json
+{
+  "mcpServers": {
+    "agentrisk": {
+      "url": "https://agentrisk.dev/mcp/manifest"
+    }
+  }
+}
+```
+
+Your agent will automatically discover `check_token_risk` as an available tool.
+
+### Option 2: LangChain
+
+```python
+from langchain.tools import tool
+from eth_account import Account
+from x402 import x402Client
+from x402.http.clients import x402HttpxClient
+from x402.mechanisms.evm import EthAccountSigner
+from x402.mechanisms.evm.exact.register import register_exact_evm_client
+
+account = Account.from_key("your_base_wallet_private_key")
+client = x402Client()
+register_exact_evm_client(client, EthAccountSigner(account))
+
+@tool
+async def check_token_safety(token_address: str) -> dict:
+    """Check if a Base token is a honeypot or scam before buying or swapping."""
+    async with x402HttpxClient(client) as http:
+        response = await http.get(f"https://agentrisk.dev/scan?token={token_address}")
+        return response.json()
+
+# Add check_token_safety to your agent's tools list
+```
+
+### Option 3: Coinbase AgentKit
+
+```python
+from coinbase_agentkit import action
+
+@action(
+    name="check_token_safety",
+    description="Check if a Base token is safe to trade before executing a swap"
+)
+async def check_token_safety(token_address: str) -> dict:
+    async with x402HttpxClient(client) as http:
+        response = await http.get(f"https://agentrisk.dev/scan?token={token_address}")
+        return response.json()
+```
+
+### Option 4: Plain Python (any custom bot, no framework)
+
+```python
+def buy_token(token_address, amount):
+    risk = check_token_safety(token_address)  # your call to AgentRisk
+    if not risk["shouldExecute"]:
+        print(f"Blocked: {risk['verdict']}")
+        return
+    execute_swap(token_address, amount)
+```
+
+### Option 5: Automatic discovery via x402 Bazaar
+
+If your agent searches the [x402 Bazaar](https://x402bazaar.xyz) for tools, AgentRisk is discoverable automatically — no manual integration needed.
+
 ## 🚀 Other Integration Options
 
 ### Option 1: MCP Server (For Claude, Cursor & Custom Agents)
