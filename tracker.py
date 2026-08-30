@@ -132,7 +132,7 @@ def get_track_record_stats() -> Dict[str, Any]:
         return {"error": str(e), "totalScans": 0}
 
 
-FREE_TRIAL_LIMIT = 1
+FREE_TRIAL_LIMIT = 3
 
 
 def count_free_trials(wallet_address: str) -> int:

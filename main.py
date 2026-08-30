@@ -158,6 +158,12 @@ async def scan_trial(token: str, wallet: str, request: Request):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/test-x402.html", response_class=HTMLResponse)
+async def test_x402_page():
+    with open("static/test-x402.html") as f:
+        return f.read()
+
+
 @app.get("/.well-known/agent.json")
 async def get_agent_manifest():
     return JSONResponse(content={
@@ -181,70 +187,8 @@ async def track_record():
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    return """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="base:app_id" content="6a92aa67affbbc90e48885f2" />
-        <title>AgentRisk AI Threat Engine</title>
-        <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-            .card { background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 520px; box-sizing: border-box; }
-            h1 { font-size: 24px; margin-bottom: 8px; color: #38bdf8; }
-            p { color: #94a3b8; font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
-            .badge { background: #0369a1; color: #e0f2fe; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; display: inline-block; margin-bottom: 20px; }
-            input { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 14px; margin-bottom: 15px; box-sizing: border-box; }
-            button { width: 100%; padding: 12px; border-radius: 6px; border: none; background: #0284c7; color: #fff; font-weight: bold; font-size: 14px; cursor: pointer; transition: background 0.2s; }
-            button:hover { background: #0369a1; }
-            #result { margin-top: 20px; background: #0f172a; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 13px; white-space: pre-wrap; display: none; max-height: 250px; overflow-y: auto; color: #38bdf8; border: 1px solid #334155; }
-        </style>
-    </head>
-    <body>
-        <div class="card">
-            <h1>AgentRisk AI Threat Engine</h1>
-            <p>M2M Security API protecting autonomous trading AI agents from honeypots on Base network.</p>
-            
-            <div class="badge">⚙️ x402 Protocol Gateway • 0.15 USDC per request</div>
-
-            <input type="text" id="tokenAddress" placeholder="Enter contract address (0x...)">
-            <button onclick="checkToken()">Test API Request</button>
-            <p style="font-size:12px;color:#64748b;margin-top:10px;margin-bottom:0;">
-                Note: this button demonstrates a real API call, but the browser can't pay automatically.
-                Clicking it will show a genuine 402 Payment Required response — this is how the API is
-                supposed to behave for a request with no payment attached. See
-                <a href="https://github.com/Neurobyteio/agentrisk" style="color:#38bdf8;">the GitHub repo</a>
-                for code that actually pays and gets a result.
-            </p>
-            <div id="result"></div>
-        </div>
-
-        <script>
-            async function checkToken() {
-                const address = document.getElementById('tokenAddress').value;
-                const resultDiv = document.getElementById('result');
-                if (!address) { alert('Please enter a contract address'); return; }
-                
-                resultDiv.style.display = 'block';
-                resultDiv.innerText = 'Sending API request...';
-                
-                try {
-                    const response = await fetch(`/scan?token=${address}`);
-                    if (response.status === 402) {
-                        resultDiv.innerText = "This endpoint is paid via the x402 protocol (0.15 USDC on Base). A regular browser click can't complete the payment automatically \u2014 you're seeing a real 402 Payment Required response, not an error or a broken API. To actually get a result, you need an x402-aware client that can sign and send a USDC payment: a script using a library like x402-fetch (JS) or the x402 Python SDK, or an AI agent/MCP client configured with a Base wallet. See the README on GitHub for working code examples: https://github.com/Neurobyteio/agentrisk";
-                        return;
-                    }
-                    const data = await response.json();
-                    resultDiv.innerText = JSON.stringify(data, null, 2);
-                } catch (err) {
-                    resultDiv.innerText = 'Request error: ' + err;
-                }
-            }
-        </script>
-    </body>
-    </html>
-    """
+    with open("static/index.html") as f:
+        return f.read()
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="base:app_id" content="6a92aa67affbbc90e48885f2" />
+    <title>AgentRisk M2M — Pre-trade token safety check for Base</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+    <style>
+        * { box-sizing: border-box; }
+        html, body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #0A0E1A;
+            color: #A8B2C4;
+            margin: 0;
+            min-height: 100vh;
+            width: 100%;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 20px;
+        }
+        .container { width: 100%; max-width: 680px; }
+        .card {
+            background: #151B2E;
+            border: 0.5px solid #23293e;
+            border-radius: 12px;
+            padding: 2rem;
+        }
+        .header { text-align: center; margin-bottom: 2rem; }
+        .header-title { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .header-title i { font-size: 26px; color: #5EA6F0; }
+        .header-title span { font-size: 24px; font-weight: 500; color: #5EA6F0; }
+        .header-sub { font-size: 15px; color: #FFFFFF; font-weight: 600; margin: 0; }
+        .input-block { margin-bottom: 1.25rem; }
+        .input-block label { font-size: 13px; color: #8B95A8; display: block; margin-bottom: 8px; }
+        .input-block input {
+            width: 100%; background: #0F1424; border: 1px solid #2C3654; border-radius: 8px;
+            color: #E6E9EF; padding: 12px 14px; font-size: 14px; font-family: monospace;
+        }
+        .input-block input::placeholder { color: #6B7A99; }
+        .btn-outline {
+            width: 100%; background: transparent; border: 1px solid #2C3654; color: #A8B2C4;
+            border-radius: 8px; padding: 13px; font-size: 14px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-outline:hover { background: #1a2138; }
+        .btn-outline i { font-size: 16px; }
+        .btn-primary {
+            background: #3B82C4; border: none; color: #FFFFFF; border-radius: 8px;
+            padding: 13px; font-size: 15px; cursor: pointer; flex: 1; font-weight: 700; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-secondary {
+            background: #FFFFFF; border: none; color: #0A0E1A; border-radius: 8px;
+            padding: 13px; font-size: 15px; cursor: pointer; flex: 1; font-weight: 700;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-secondary i { font-size: 18px; }
+        .disclaimer { font-size: 12px; color: #8B95A8; text-align: center; margin: 10px 0 1.75rem; line-height: 1.6; }
+        .report { border-top: 0.5px solid #23293e; padding-top: 1.5rem; margin-bottom: 1.25rem; display: none; }
+        .report-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .report-header span:first-child { font-size: 13px; color: #8B95A8; }
+        .badge { font-size: 12px; padding: 4px 12px; border-radius: 6px; font-weight: 600; }
+        .badge-high { background: #3d1414; color: #f09595; }
+        .badge-caution { background: #412402; color: #FAC775; }
+        .badge-safe { background: #173404; color: #97C459; }
+        .verdict-text { font-size: 14px; color: #FFFFFF; font-weight: 600; line-height: 1.6; margin: 0 0 14px; }
+        .findings { display: flex; flex-direction: column; gap: 8px; }
+        .finding { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #FFFFFF; font-weight: 600; }
+        .finding i { font-size: 15px; }
+        .actions { display: flex; gap: 10px; margin-bottom: 1.5rem; }
+        .footer { text-align: center; padding-top: 0.5rem; }
+        .footer a { font-size: 13px; color: #FFFFFF; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 7px; }
+        .footer i { font-size: 16px; color: #FFFFFF; }
+        .status-msg { font-size: 13px; color: #8B95A8; text-align: center; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+        <div class="header">
+            <div class="header-title">
+                <i class="ti ti-shield-check"></i>
+                <span>AgentRisk M2M</span>
+            </div>
+            <p class="header-sub">Pre-trade token safety check for Base</p>
+        </div>
+
+        <div class="input-block">
+            <label for="tokenInput">Token contract address</label>
+            <input type="text" id="tokenInput" placeholder="0x...">
+        </div>
+
+        <button class="btn-outline" id="connectBtn" onclick="connectWallet()">
+            <i class="ti ti-wallet"></i>
+            Connect wallet to verify — 3 free checks
+        </button>
+        <p class="disclaimer">
+            Just a signature. Your funds stay safe. The free check runs the exact same full analysis as a paid one — after that, it's 0.15 USDC. Your payment helps us grow the service, and you get peace of mind about your assets before you trade.
+        </p>
+        <div class="status-msg" id="statusMsg"></div>
+
+        <div class="report" id="reportSection">
+            <div class="report-header">
+                <span>Full report</span>
+                <span class="badge" id="riskBadge"></span>
+            </div>
+            <p class="verdict-text" id="verdictText"></p>
+            <div class="findings" id="findingsList"></div>
+        </div>
+
+        <div class="actions" id="actionsRow" style="display:none;">
+            <button class="btn-secondary" onclick="shareResult()"><i class="ti ti-brand-x"></i>Please share result</button>
+            <button class="btn-primary" id="continueBtn" onclick="runAnotherCheck()">Run another check — 0.15 USDC</button>
+        </div>
+
+        <div class="footer">
+            <a href="https://github.com/Neurobyteio/agentrisk" target="_blank"><i class="ti ti-brand-github"></i>Open source on GitHub — github.com/Neurobyteio/agentrisk</a>
+        </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
+    <script>
+        let connectedWallet = null;
+        let lastReport = null;
+
+        async function connectWallet() {
+            if (typeof window.ethereum === 'undefined') {
+                alert('No Web3 wallet detected. Please install MetaMask or Coinbase Wallet.');
+                return;
+            }
+            try {
+                const provider = new ethers.BrowserProvider(window.ethereum);
+                const accounts = await provider.send('eth_requestAccounts', []);
+                connectedWallet = accounts[0];
+                document.getElementById('connectBtn').innerHTML = '<i class="ti ti-check"></i> ' + connectedWallet.slice(0, 6) + '...' + connectedWallet.slice(-4);
+                runCheck();
+            } catch (err) {
+                document.getElementById('statusMsg').innerText = 'Wallet connection failed: ' + err.message;
+            }
+        }
+
+        async function runCheck() {
+            const token = document.getElementById('tokenInput').value.trim();
+            if (!token) {
+                alert('Please enter a token contract address first.');
+                return;
+            }
+            document.getElementById('statusMsg').innerText = 'Analyzing token...';
+            try {
+                const resp = await fetch('/scan-trial?token=' + token + '&wallet=' + connectedWallet);
+                const data = await resp.json();
+                if (!resp.ok) {
+                    document.getElementById('statusMsg').innerText = '';
+                    showLimitReached();
+                    return;
+                }
+                lastReport = data;
+                showReport(data);
+                document.getElementById('statusMsg').innerText = '';
+            } catch (err) {
+                document.getElementById('statusMsg').innerText = 'Error: ' + err.message;
+            }
+        }
+
+        function showReport(data) {
+            document.getElementById('reportSection').style.display = 'block';
+            document.getElementById('actionsRow').style.display = 'flex';
+
+            const badge = document.getElementById('riskBadge');
+            badge.innerText = data.risk_level + ' — ' + data.risk_score + ' / 100';
+            var level = (data.risk_level || '').toUpperCase();
+            var badgeClass = level.indexOf('HIGH') !== -1 ? 'badge-high' : level.indexOf('CAUTION') !== -1 ? 'badge-caution' : 'badge-safe';
+            badge.className = 'badge ' + badgeClass;
+
+            document.getElementById('verdictText').innerText = data.verdict || '';
+
+            const list = document.getElementById('findingsList');
+            list.innerHTML = '';
+            (data.findings || []).forEach(function(f) {
+                const div = document.createElement('div');
+                div.className = 'finding';
+                const isWarning = f.severity === 'critical' || f.severity === 'high';
+                div.innerHTML = '<i class="ti ' + (isWarning ? 'ti-alert-triangle' : 'ti-info-circle') + '"></i> ' + f.message;
+                list.appendChild(div);
+            });
+
+            const continueBtn = document.getElementById('continueBtn');
+            continueBtn.innerHTML = '<i class=\"ti ti-brand-github\"></i> Get it from GitHub';
+            continueBtn.onclick = function() { window.open('https://github.com/Neurobyteio/agentrisk', '_blank'); };
+        }
+
+        function showLimitReached() {
+            document.getElementById('actionsRow').style.display = 'flex';
+            const continueBtn = document.getElementById('continueBtn');
+            continueBtn.innerHTML = '<i class="ti ti-brand-github"></i> Get it from GitHub';
+            continueBtn.onclick = function() {
+                window.open('https://github.com/Neurobyteio/agentrisk', '_blank');
+            };
+            document.getElementById('statusMsg').innerText = "You've used your 3 free checks. Grab the code on GitHub to run more.";
+        }
+
+        function shareResult() {
+            if (!lastReport) return;
+            var levelEmoji = lastReport.risk_score >= 60 ? '🔴' : lastReport.risk_score >= 30 ? '🟡' : '🟢'; const text = '🛡️ AgentRisk M2M just scanned a token on Base — no scam gets past this.\n\n' + levelEmoji + ' ' + lastReport.risk_level + ' (' + lastReport.risk_score + '/100)\n' + lastReport.verdict + '\n\nCheck any token free (3 scans): https://agentrisk.dev\nOpen source: https://github.com/Neurobyteio/agentrisk';
+            window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank');
+        }
+
+        function runAnotherCheck() {
+            document.getElementById('statusMsg').innerText = 'Note: this requires 0.15 USDC payment via x402 — see the GitHub repo for a client example.';
+        }
+    </script>
+</body>
+</html>
