@@ -159,6 +159,7 @@ class RiskReport:
     verdict: str = ""
     confidence: str = "high"
     cached: bool = False
+    sell_simulation: Optional[dict] = None
 
 
 KNOWN_BRANDS = [
@@ -185,6 +186,37 @@ async def _check_deployer_freshness(rpc_manager, deployer_address: str) -> int |
             checksum = w3.to_checksum_address(deployer_address)
             return await w3.eth.get_transaction_count(checksum)
         return await rpc_manager.call_with_fallback(_op)
+    except Exception:
+        return None
+
+
+QUOTER_V2_ADDRESS = "0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a"
+WETH_ADDRESS = "0x4200000000000000000000000000000000000006"
+V3_FEE_TIERS = [(100, "0.01%"), (500, "0.05%"), (3000, "0.3%"), (10000, "1%")]
+
+
+async def _simulate_sell(rpc_manager, token_address: str) -> dict | None:
+    """Simulates selling 1000 units of a token via Uniswap V3 QuoterV2, without a real transaction."""
+    async def try_quote(w3):
+        selector = "0xc6a5026a"
+        token_in = w3.to_checksum_address(token_address)[2:].lower().zfill(64)
+        token_out = w3.to_checksum_address(WETH_ADDRESS)[2:].lower().zfill(64)
+        amount_in = hex(1000 * 10**18)[2:].zfill(64)
+        sqrt_limit = "0".zfill(64)
+
+        for fee_value, fee_name in V3_FEE_TIERS:
+            fee_hex = hex(fee_value)[2:].zfill(64)
+            data = selector + token_in + token_out + amount_in + fee_hex + sqrt_limit
+            try:
+                result = await w3.eth.call({"to": w3.to_checksum_address(QUOTER_V2_ADDRESS), "data": data})
+                amount_out_wei = int.from_bytes(result[:32], "big")
+                return {"sellable": True, "fee_tier": fee_name, "amount_out_weth": amount_out_wei / 1e18}
+            except Exception:
+                continue
+        return {"sellable": False}
+
+    try:
+        return await rpc_manager.call_with_fallback(try_quote)
     except Exception:
         return None
 
@@ -835,6 +867,19 @@ class TokenAnalyzer:
                     )
             except Exception as exc:  # noqa: BLE001
                 report.warnings.append(f"LP burn verification failed: {exc}")
+
+            sim_result = await _simulate_sell(self.rpc_manager, report.address)
+            if sim_result is not None:
+                report.sell_simulation = sim_result
+                if sim_result.get("sellable") is False and not report.is_honeypot:
+                    report.findings.append(
+                        RiskFinding(
+                            code="SELL_SIMULATION_FAILED",
+                            severity="critical",
+                            message="Live sell simulation failed across all fee tiers — this token may not be sellable right now, even though static checks did not flag it as a honeypot.",
+                            weight=40,
+                        )
+                    )
 
         matched_brand = _check_brand_impersonation(report.name or "", report.symbol or "")
         if matched_brand:
