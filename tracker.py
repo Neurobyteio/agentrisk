@@ -20,6 +20,14 @@ def init_db():
         )
     ''')
     cursor.execute('''
+        CREATE TABLE IF NOT EXISTS free_trials (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp INTEGER,
+            wallet_address TEXT,
+            token_address TEXT
+        )
+    ''')
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS deployers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp INTEGER,
@@ -122,3 +130,31 @@ def get_track_record_stats() -> Dict[str, Any]:
         }
     except Exception as e:
         return {"error": str(e), "totalScans": 0}
+
+
+FREE_TRIAL_LIMIT = 1
+
+
+def count_free_trials(wallet_address: str) -> int:
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT COUNT(*) FROM free_trials WHERE wallet_address = ?",
+        (wallet_address.lower(),)
+    )
+    count = cursor.fetchone()[0]
+    conn.close()
+    return count
+
+
+def log_free_trial(wallet_address: str, token_address: str):
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO free_trials (timestamp, wallet_address, token_address) VALUES (?, ?, ?)",
+        (int(time.time()), wallet_address.lower(), token_address)
+    )
+    conn.commit()
+    conn.close()

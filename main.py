@@ -60,7 +60,7 @@ x402_routes: dict[str, RouteConfig] = {
             ),
         ],
         mime_type="application/json",
-        description="Pre-trade risk analysis for a Base token contract.",
+        description="Detect honeypot, rug pull, scam, and fake tokens on Base before buying or swapping. Pre-trade contract safety check: mint function, blacklist function, transfer pausable, buy/sell tax, ownership renounced, LP locked or burned, holder concentration, deployer wallet history and reputation, brand impersonation. Returns risk score, confidence level, and clear buy/don't-buy verdict for autonomous trading agents on Base.",
         resource="https://agentrisk.dev/scan",
         extensions=declare_discovery_extension(
             input={"token": "0x4200000000000000000000000000000000000006"},
@@ -83,7 +83,7 @@ x402_routes: dict[str, RouteConfig] = {
             ),
         ],
         mime_type="application/json",
-        description="Pre-trade risk analysis for a Base token contract (MCP tool).",
+        description="Detect honeypot, rug pull, scam, and fake tokens on Base before buying or swapping (MCP tool). Pre-trade contract safety check: mint function, blacklist function, transfer pausable, buy/sell tax, ownership renounced, LP locked or burned, holder concentration, deployer wallet history and reputation, brand impersonation. Returns risk score, confidence level, and clear buy/don't-buy verdict for autonomous trading agents on Base.",
         resource="https://agentrisk.dev/mcp/tools/check_token_risk",
     ),
 }
@@ -132,6 +132,32 @@ async def scan_token(token: str, request: Request):
         logger.error(f"Analysis error for {token}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/scan-trial")
+async def scan_trial(token: str, wallet: str, request: Request):
+    wallet = wallet.lower()
+    if not wallet.startswith("0x") or len(wallet) != 42:
+        raise HTTPException(status_code=400, detail="Invalid wallet address format.")
+
+    used = tracker.count_free_trials(wallet)
+    if used >= tracker.FREE_TRIAL_LIMIT:
+        raise HTTPException(
+            status_code=402,
+            detail=f"Free trial limit ({tracker.FREE_TRIAL_LIMIT}) reached for this wallet. Use /scan with x402 payment (0.15 USDC) to continue."
+        )
+
+    try:
+        from rpc_manager import RPCManager
+        rpc = RPCManager()
+        analyzer = TokenAnalyzer(rpc_manager=rpc)
+        report = await analyzer.analyze(token)
+        await analyzer.aclose()
+        tracker.log_free_trial(wallet_address=wallet, token_address=token)
+        return report
+    except Exception as e:
+        logger.error(f"Free trial analysis error for {token}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/.well-known/agent.json")
 async def get_agent_manifest():
     return JSONResponse(content={
@@ -161,6 +187,7 @@ async def root():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="base:app_id" content="6a92aa67affbbc90e48885f2" />
         <title>AgentRisk AI Threat Engine</title>
         <style>
             body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
