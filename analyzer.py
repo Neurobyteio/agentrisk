@@ -880,6 +880,12 @@ class TokenAnalyzer:
                             weight=40,
                         )
                     )
+                    report.risk_score = min(100, report.risk_score + 40)
+                    if report.risk_score >= 60:
+                        report.risk_level = RiskLevel.HIGH_RISK
+                    elif report.risk_score >= 30:
+                        report.risk_level = RiskLevel.CAUTION
+                    report.verdict = self._build_verdict(report)
 
         matched_brand = _check_brand_impersonation(report.name or "", report.symbol or "")
         if matched_brand:
