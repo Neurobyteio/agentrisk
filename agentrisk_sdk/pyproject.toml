@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentriskm2m"
-version = "1.0.0"
+version = "1.1.0"
 description = "Pre-trade token risk scoring and honeypot detection for Base Network, paid via x402"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -14,3 +14,9 @@ keywords = ["base", "crypto", "honeypot", "security", "ai-agent", "x402", "token
 [project.urls]
 Homepage = "https://agentrisk.dev"
 Repository = "https://github.com/Neurobyteio/agentrisk"
+
+[tool.setuptools.package-data]
+agentrisk = ["py.typed"]
+
+[project.scripts]
+agentriskm2m = "agentrisk.cli:main"

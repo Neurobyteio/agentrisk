@@ -1,8 +1,11 @@
 README.md
 pyproject.toml
 agentrisk/__init__.py
+agentrisk/cli.py
+agentrisk/py.typed
 agentriskm2m.egg-info/PKG-INFO
 agentriskm2m.egg-info/SOURCES.txt
 agentriskm2m.egg-info/dependency_links.txt
+agentriskm2m.egg-info/entry_points.txt
 agentriskm2m.egg-info/requires.txt
 agentriskm2m.egg-info/top_level.txt
