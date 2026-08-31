@@ -103,7 +103,7 @@ async def favicon():
 os.makedirs(".well-known/mcp", exist_ok=True)
 app.mount("/.well-known", StaticFiles(directory=".well-known"), name="well-known")
 @app.get("/scan")
-async def scan_token(token: str, request: Request):
+async def scan_token(token: str, request: Request, attest: bool = False):
     
     try:
         from rpc_manager import RPCManager
@@ -127,6 +127,19 @@ async def scan_token(token: str, request: Request):
                 risk_score=report.risk_score,
                 is_honeypot=bool(report.is_honeypot),
             )
+        if attest:
+            from attestation import sign_receipt
+            receipt = sign_receipt(
+                scan_id=report.scan_id,
+                risk_score=report.risk_score,
+                token_address=token,
+                chain="base",
+                timestamp=report.timestamp,
+            )
+            if receipt is not None:
+                report_dict = report.model_dump() if hasattr(report, "model_dump") else report.__dict__
+                report_dict["attestation"] = receipt
+                return report_dict
         return report
     except Exception as e:
         logger.error(f"Analysis error for {token}: {e}")
