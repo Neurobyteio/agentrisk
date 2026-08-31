@@ -196,27 +196,61 @@ V3_FEE_TIERS = [(100, "0.01%"), (500, "0.05%"), (3000, "0.3%"), (10000, "1%")]
 
 
 async def _simulate_sell(rpc_manager, token_address: str) -> dict | None:
-    """Simulates selling 1000 units of a token via Uniswap V3 QuoterV2, without a real transaction."""
-    async def try_quote(w3):
-        selector = "0xc6a5026a"
-        token_in = w3.to_checksum_address(token_address)[2:].lower().zfill(64)
-        token_out = w3.to_checksum_address(WETH_ADDRESS)[2:].lower().zfill(64)
-        amount_in = hex(1000 * 10**18)[2:].zfill(64)
-        sqrt_limit = "0".zfill(64)
-
-        for fee_value, fee_name in V3_FEE_TIERS:
-            fee_hex = hex(fee_value)[2:].zfill(64)
-            data = selector + token_in + token_out + amount_in + fee_hex + sqrt_limit
-            try:
-                result = await w3.eth.call({"to": w3.to_checksum_address(QUOTER_V2_ADDRESS), "data": data})
-                amount_out_wei = int.from_bytes(result[:32], "big")
-                return {"sellable": True, "fee_tier": fee_name, "amount_out_weth": amount_out_wei / 1e18}
-            except Exception:
-                continue
-        return {"sellable": False}
-
+    """Universal sell simulation: tries getReserves() for V2-style pools,
+    then slot0() for V3/Slipstream-style pools, using the real quote token
+    and DEX reported by DexScreener instead of assuming WETH/Uniswap."""
+    import httpx
     try:
-        return await rpc_manager.call_with_fallback(try_quote)
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            resp = await client.get(f"https://api.dexscreener.com/latest/dex/tokens/{token_address}")
+            data = resp.json()
+            pairs = data.get("pairs", [])
+            if not pairs:
+                return None
+            pairs.sort(key=lambda p: p.get("liquidity", {}).get("usd", 0) or 0, reverse=True)
+            best_pair = pairs[0]
+            pair_address = best_pair.get("pairAddress", "")
+            quote_symbol = best_pair.get("quoteToken", {}).get("symbol")
+            dex_id = best_pair.get("dexId")
+
+        if len(pair_address) != 42:
+            return {"sellable": None, "reason": f"unsupported pool format ({dex_id})"}
+
+        async def try_methods(w3):
+            pair = w3.to_checksum_address(pair_address)
+            try:
+                token0_result = await w3.eth.call({"to": pair, "data": "0x0dfe1681"})
+                token0 = "0x" + token0_result[-20:].hex()
+            except Exception:
+                return {"sellable": None, "reason": "could not read pool token0"}
+            is_token0 = token0.lower() == token_address.lower()
+
+            try:
+                result = await w3.eth.call({"to": pair, "data": "0x0902f1ac"})
+                reserve0 = int.from_bytes(result[0:32], "big")
+                reserve1 = int.from_bytes(result[32:64], "big")
+                token_reserve = reserve0 if is_token0 else reserve1
+                quote_reserve = reserve1 if is_token0 else reserve0
+                if token_reserve == 0:
+                    raise ValueError("zero reserve")
+                amount_in = 1000 * 10**18
+                amount_out = (amount_in * quote_reserve) // (token_reserve + amount_in)
+                return {"sellable": True, "method": "getReserves", "quote_token": quote_symbol, "amount_out": amount_out / 1e18, "dex": dex_id}
+            except Exception:
+                pass
+
+            try:
+                result = await w3.eth.call({"to": pair, "data": "0x3850c7bd"})
+                sqrt_price_x96 = int.from_bytes(result[0:32], "big")
+                if sqrt_price_x96 == 0:
+                    raise ValueError("zero price")
+                return {"sellable": True, "method": "slot0", "quote_token": quote_symbol, "dex": dex_id}
+            except Exception:
+                pass
+
+            return {"sellable": False, "method": "none worked", "dex": dex_id}
+
+        return await rpc_manager.call_with_fallback(try_methods)
     except Exception:
         return None
 
@@ -876,7 +910,7 @@ class TokenAnalyzer:
                         RiskFinding(
                             code="SELL_SIMULATION_FAILED",
                             severity="critical",
-                            message="Live sell simulation failed across all fee tiers — this token may not be sellable right now, even though static checks did not flag it as a honeypot.",
+                            message="Live sell simulation failed via all available on-chain methods — this token may not be sellable right now, even though static checks did not flag it as a honeypot.",
                             weight=40,
                         )
                     )
