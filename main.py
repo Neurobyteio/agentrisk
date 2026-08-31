@@ -111,7 +111,8 @@ async def scan_token(token: str, request: Request, attest: bool = False):
         analyzer = TokenAnalyzer(rpc_manager=rpc)
         report = await analyzer.analyze(token)
         await analyzer.aclose()
-        should_execute = report.risk_score <= 45
+        has_critical_finding = any(f.severity == "critical" for f in report.findings)
+        should_execute = report.risk_score <= 45 and not has_critical_finding
         tracker.log_scan(
             address=token,
             risk_score=report.risk_score,
@@ -127,6 +128,8 @@ async def scan_token(token: str, request: Request, attest: bool = False):
                 risk_score=report.risk_score,
                 is_honeypot=bool(report.is_honeypot),
             )
+        report_dict = report.model_dump() if hasattr(report, "model_dump") else dict(report.__dict__)
+        report_dict["should_execute"] = should_execute
         if attest:
             from attestation import sign_receipt
             receipt = sign_receipt(
@@ -137,10 +140,8 @@ async def scan_token(token: str, request: Request, attest: bool = False):
                 timestamp=report.timestamp,
             )
             if receipt is not None:
-                report_dict = report.model_dump() if hasattr(report, "model_dump") else report.__dict__
                 report_dict["attestation"] = receipt
-                return report_dict
-        return report
+        return report_dict
     except Exception as e:
         logger.error(f"Analysis error for {token}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
