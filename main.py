@@ -1,6 +1,8 @@
 from __future__ import annotations
 import tracker
 import os
+import json
+import time
 import logging
 from typing import Optional
 
@@ -176,6 +178,50 @@ async def scan_trial(token: str, wallet: str, request: Request):
 async def test_x402_page():
     with open("static/test-x402.html") as f:
         return f.read()
+
+
+@app.post("/verify")
+async def verify_receipt(request: Request):
+    body = await request.json()
+    required_fields = ["scan_id", "risk_score", "input_digest", "rulepack_hash", "rulepack_version", "chain", "timestamp", "signer", "signature"]
+    if not all(k in body for k in required_fields):
+        return JSONResponse(content={"valid": False, "reason": "missing required fields"}, status_code=400)
+
+    from eth_account import Account
+    from eth_account.messages import encode_defunct
+    from attestation import get_rulepack_hash
+
+    receipt = {k: body[k] for k in required_fields if k != "signature"}
+    signature = body["signature"]
+
+    try:
+        message_str = json.dumps(receipt, sort_keys=True)
+        message = encode_defunct(text=message_str)
+        recovered = Account.recover_message(message, signature=signature)
+    except Exception as e:
+        return JSONResponse(content={"valid": False, "reason": f"malformed signature: {e}"})
+
+    expected_signer = os.environ.get("ATTESTATION_SIGNER_ADDRESS", "0x963E6bC84fAA5AF0a25CACA6a0B8257B5b78d840")
+    signature_valid = recovered.lower() == expected_signer.lower() and recovered.lower() == body["signer"].lower()
+
+    current_rulepack = get_rulepack_hash()
+    rulepack_current = body["rulepack_hash"] == current_rulepack
+
+    age_seconds = int(time.time()) - body["timestamp"]
+    max_age_seconds = 24 * 60 * 60
+    is_stale = age_seconds > max_age_seconds
+
+    valid = signature_valid and not is_stale
+
+    return JSONResponse(content={
+        "valid": valid,
+        "signature_valid": signature_valid,
+        "signer": recovered if signature_valid else None,
+        "rulepack_current": rulepack_current,
+        "age_seconds": age_seconds,
+        "stale": is_stale,
+        "revoked": False,
+    })
 
 
 @app.get("/.well-known/agent.json")
