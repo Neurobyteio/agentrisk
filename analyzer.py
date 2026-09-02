@@ -195,7 +195,7 @@ WETH_ADDRESS = "0x4200000000000000000000000000000000000006"
 V3_FEE_TIERS = [(100, "0.01%"), (500, "0.05%"), (3000, "0.3%"), (10000, "1%")]
 
 
-async def _simulate_sell(rpc_manager, token_address: str) -> dict | None:
+async def _simulate_sell(rpc_manager, token_address: str, price_usd: float = None) -> dict | None:
     """Universal sell simulation: tries getReserves() for V2-style pools,
     then slot0() for V3/Slipstream-style pools, using the real quote token
     and DEX reported by DexScreener instead of assuming WETH/Uniswap."""
@@ -256,7 +256,23 @@ async def _simulate_sell(rpc_manager, token_address: str) -> dict | None:
                     raise ValueError("zero reserve")
                 amount_in = 1000 * 10**18
                 amount_out = (amount_in * quote_reserve) // (token_reserve + amount_in)
-                return {"sellable": True, "method": "getReserves", "quote_token": quote_symbol, "amount_out": amount_out / 1e18, "dex": dex_id}
+
+                exit_liquidity = {}
+                if token_reserve > 0 and quote_reserve > 0 and price_usd is not None and price_usd > 0:
+                    spot_price_native = quote_reserve / token_reserve
+                    for usd_label, usd_amount in [("100", 100), ("1000", 1000), ("10000", 10000)]:
+                        tokens_for_usd = usd_amount / price_usd
+                        est_tokens_in = int(tokens_for_usd * 1e18)
+                        if est_tokens_in > 0 and est_tokens_in < token_reserve:
+                            out = (est_tokens_in * quote_reserve) // (token_reserve + est_tokens_in)
+                            expected_out_no_impact = est_tokens_in * spot_price_native / 1e18
+                            actual_out = out / 1e18
+                            impact_pct = round((1 - (actual_out / expected_out_no_impact)) * 100, 2) if expected_out_no_impact > 0 else None
+                            exit_liquidity[usd_label] = {"price_impact_pct": impact_pct}
+                        else:
+                            exit_liquidity[usd_label] = {"price_impact_pct": None, "note": "position exceeds available liquidity"}
+
+                return {"sellable": True, "method": "getReserves", "quote_token": quote_symbol, "amount_out": amount_out / 1e18, "dex": dex_id, "exit_liquidity": exit_liquidity}
             except Exception:
                 pass
 
@@ -923,7 +939,7 @@ class TokenAnalyzer:
             except Exception as exc:  # noqa: BLE001
                 report.warnings.append(f"LP burn verification failed: {exc}")
 
-            sim_result = await _simulate_sell(self.rpc_manager, report.address)
+            sim_result = await _simulate_sell(self.rpc_manager, report.address, price_usd=report.price_usd)
             if sim_result is not None:
                 report.sell_simulation = sim_result
                 if sim_result.get("sellable") is False and not report.is_honeypot:
