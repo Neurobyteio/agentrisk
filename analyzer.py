@@ -213,6 +213,27 @@ async def _simulate_sell(rpc_manager, token_address: str) -> dict | None:
             quote_symbol = best_pair.get("quoteToken", {}).get("symbol")
             dex_id = best_pair.get("dexId")
 
+        is_v4 = "v4" in (best_pair.get("labels") or [])
+
+        if is_v4:
+            STATE_VIEW = "0xA3c0c9b65bAD0b08107Aa264b0f3dB444b867a71"
+            pool_id = pair_address
+
+            async def try_v4(w3):
+                selector = "c815641c"
+                pool_id_padded = pool_id[2:].zfill(64)
+                data = "0x" + selector + pool_id_padded
+                result = await w3.eth.call({"to": w3.to_checksum_address(STATE_VIEW), "data": data})
+                sqrt_price_x96 = int.from_bytes(result[0:32], "big")
+                if sqrt_price_x96 == 0:
+                    raise ValueError("zero price")
+                return {"sellable": True, "method": "v4_slot0", "quote_token": quote_symbol, "dex": "uniswap_v4"}
+
+            try:
+                return await rpc_manager.call_with_fallback(try_v4)
+            except Exception:
+                return {"sellable": False, "method": "v4_failed", "dex": "uniswap_v4"}
+
         if len(pair_address) != 42:
             return {"sellable": None, "reason": f"unsupported pool format ({dex_id})"}
 
