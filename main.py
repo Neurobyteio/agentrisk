@@ -105,7 +105,15 @@ async def favicon():
 os.makedirs(".well-known/mcp", exist_ok=True)
 app.mount("/.well-known", StaticFiles(directory=".well-known"), name="well-known")
 @app.get("/scan")
-async def scan_token(token: str, request: Request, attest: bool = False):
+async def scan_token(
+    token: str,
+    request: Request,
+    attest: bool = False,
+    max_risk: int = None,
+    require_lp_lock: bool = False,
+    require_sellable: bool = False,
+    max_holder_concentration: float = None,
+):
     
     try:
         from rpc_manager import RPCManager
@@ -132,6 +140,22 @@ async def scan_token(token: str, request: Request, attest: bool = False):
             )
         report_dict = report.model_dump() if hasattr(report, "model_dump") else dict(report.__dict__)
         report_dict["should_execute"] = should_execute
+        has_policy = any([max_risk is not None, require_lp_lock, require_sellable, max_holder_concentration is not None])
+        if has_policy:
+            violations = []
+            if max_risk is not None and report.risk_score > max_risk:
+                violations.append("risk_score_exceeds_max")
+            if require_lp_lock and report.lp_locked_or_burned is not True:
+                violations.append("lp_not_locked")
+            if require_sellable and report.sell_simulation and report.sell_simulation.get("sellable") is not True:
+                violations.append("not_confirmed_sellable")
+            if max_holder_concentration is not None and report.top10_holder_pct is not None and report.top10_holder_pct > max_holder_concentration:
+                violations.append("holder_concentration_exceeds_max")
+            policy_decision = {
+                "decision": "BLOCK" if violations else "ALLOW",
+                "violations": violations,
+            }
+
         if attest:
             from attestation import sign_receipt
             receipt = sign_receipt(
@@ -143,6 +167,8 @@ async def scan_token(token: str, request: Request, attest: bool = False):
             )
             if receipt is not None:
                 report_dict["attestation"] = receipt
+        if has_policy:
+            report_dict["policy_decision"] = policy_decision
         return report_dict
     except Exception as e:
         logger.error(f"Analysis error for {token}: {e}")
