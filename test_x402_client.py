@@ -23,7 +23,7 @@ PRIVATE_KEY = os.environ.get("TEST_PAYER_PRIVATE_KEY")
 if not PRIVATE_KEY:
     raise RuntimeError("TEST_PAYER_PRIVATE_KEY not set in .env")
 
-TARGET_URL = "https://agentrisk.dev/scan?token=0x4200000000000000000000000000000000000006&max_risk=50"
+TARGET_URL = "https://agentrisk.dev/scan?token=0x4200000000000000000000000000000000000006"
 
 
 async def main():
