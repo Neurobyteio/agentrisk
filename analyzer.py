@@ -292,6 +292,19 @@ async def _simulate_sell(rpc_manager, token_address: str, price_usd: float = Non
         return None
 
 
+SUSPICIOUS_NAME_PATTERNS = [
+    "claim", "airdrop", "bonus", "reward", "visit", ".com", ".xyz", ".io/",
+    ".net", "gift", "voucher", ".app", "activate", "redeem",
+]
+
+
+def _check_suspicious_name(name: str, symbol: str) -> bool:
+    """Flags token names/symbols that look like phishing/dust scam bait
+    (e.g. 'Claim your reward at claim-usdt.xyz')."""
+    combined = f"{name or ''} {symbol or ''}".lower()
+    return any(pattern in combined for pattern in SUSPICIOUS_NAME_PATTERNS)
+
+
 class TokenAnalyzer:
     """
     Runs a full multi-source risk audit for a given ERC-20 token address on
@@ -966,6 +979,16 @@ class TokenAnalyzer:
                     severity="medium",
                     message=f"Token name/symbol resembles '{matched_brand.title()}'. This may be an unofficial or impersonating token — verify the issuer before trusting the brand name.",
                     weight=10,
+                )
+            )
+
+        if _check_suspicious_name(report.name or "", report.symbol or ""):
+            report.findings.append(
+                RiskFinding(
+                    code="SUSPICIOUS_DUST_SCAM_NAME",
+                    severity="critical",
+                    message="Token name or symbol contains phishing-bait language such as claim, airdrop, bonus, or an embedded URL. Commonly used for unsolicited dust-scam tokens. Do not interact with, approve, or attempt to transfer this token.",
+                    weight=40,
                 )
             )
 
