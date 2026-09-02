@@ -29,6 +29,14 @@ app = FastAPI(
     },
 )
 
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 PAYMENT_WALLET = "0x42Baa7DEBbB71aFB90f14d0352F0390aE0C35ABB"
 PRICE_USDC = "0.15"
 from x402.extensions.bazaar import declare_discovery_extension, OutputConfig, bazaar_resource_server_extension
