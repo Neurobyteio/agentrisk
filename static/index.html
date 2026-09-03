@@ -200,18 +200,13 @@
                 <div style="background:#FFFFFF;color:#0A0E1A;border-radius:16px;padding:2.5rem;max-width:420px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
                     <div style="font-size:40px;margin-bottom:1rem;">🔒</div>
                     <h2 style="margin:0 0 0.75rem;font-size:20px;font-weight:700;">You've used your 3 free checks</h2>
-                    <p style="margin:0 0 1.5rem;font-size:14px;color:#4A5568;line-height:1.6;">Thanks for trying AgentRisk M2M. To keep checking tokens, you have two options:</p>
-                    <button id="modalPayBtn" style="width:100%;background:#0c447c;border:none;color:#FFFFFF;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px;">Run another check — 0.15 USDC</button>
-                    <button id="modalGithubBtn" style="width:100%;background:#0A0E1A;border:none;color:#FFFFFF;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;">Or use the API directly from GitHub</button>
+                    <p style="margin:0 0 1.5rem;font-size:14px;color:#4A5568;line-height:1.6;">Want to keep checking tokens? Grab the free API from GitHub and run it yourself — 0.15 USDC per scan via x402, no signup.</p>
+                    <button id="modalGithubBtn" style="width:100%;background:#0A0E1A;border:none;color:#FFFFFF;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;">Get the API on GitHub</button>
                 </div>
             `;
             document.body.appendChild(overlay);
             document.getElementById('modalGithubBtn').onclick = function() {
                 window.open('https://github.com/Neurobyteio/agentrisk', '_blank');
-            };
-            document.getElementById('modalPayBtn').onclick = function() {
-                overlay.remove();
-                runAnotherCheck();
             };
             overlay.onclick = function(e) {
                 if (e.target === overlay) overlay.remove();
