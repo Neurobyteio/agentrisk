@@ -251,8 +251,12 @@ async def verify_receipt(request: Request):
         "valid": valid,
         "signature_valid": signature_valid,
         "signer": recovered if signature_valid else None,
+        "signer_key_id": expected_signer,
+        "rulepack_hash": body["rulepack_hash"],
         "rulepack_current": rulepack_current,
+        "verified_at": int(time.time()),
         "age_seconds": age_seconds,
+        "max_age_seconds": max_age_seconds,
         "stale": is_stale,
         "revoked": False,
     })
