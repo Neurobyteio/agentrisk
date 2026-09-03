@@ -274,9 +274,15 @@ async def verify_receipt(request: Request):
     replay_detected = _check_replay(body["scan_id"])
     valid = signature_valid and not is_stale and not replay_detected
 
+    is_revoked = False  # No revocation registry exists yet — this always evaluates to False.
+                         # Reserved for future use; today staleness (24h TTL) serves the same
+                         # practical purpose as revocation would.
+
     failure_reason = None
     if not signature_valid:
         failure_reason = "unsigned"
+    elif is_revoked:
+        failure_reason = "revoked"
     elif replay_detected:
         failure_reason = "replayed"
     elif is_stale:
@@ -294,7 +300,7 @@ async def verify_receipt(request: Request):
         "age_seconds": age_seconds,
         "max_age_seconds": max_age_seconds,
         "stale": is_stale,
-        "revoked": False,
+        "revoked": is_revoked,
         "replay_detected": replay_detected,
         "replay_window_seconds": _VERIFY_CACHE_TTL,
     })
