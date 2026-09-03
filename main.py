@@ -214,6 +214,32 @@ async def test_x402_page():
         return f.read()
 
 
+_VERIFY_CACHE_TTL = 600  # 10 minutes
+
+
+def _check_replay(scan_id: str) -> bool:
+    """Returns True if this scan_id was already verified within the TTL window.
+    Uses SQLite (shared across all uvicorn workers) instead of in-memory dict."""
+    import sqlite3
+    conn = sqlite3.connect(tracker.DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        '''CREATE TABLE IF NOT EXISTS verify_log (
+            scan_id TEXT PRIMARY KEY,
+            first_seen INTEGER
+        )'''
+    )
+    now = int(time.time())
+    cursor.execute("DELETE FROM verify_log WHERE ? - first_seen > ?", (now, _VERIFY_CACHE_TTL))
+    cursor.execute("SELECT 1 FROM verify_log WHERE scan_id = ?", (scan_id,))
+    was_seen = cursor.fetchone() is not None
+    if not was_seen:
+        cursor.execute("INSERT OR IGNORE INTO verify_log (scan_id, first_seen) VALUES (?, ?)", (scan_id, now))
+    conn.commit()
+    conn.close()
+    return was_seen
+
+
 @app.post("/verify")
 async def verify_receipt(request: Request):
     body = await request.json()
@@ -245,6 +271,7 @@ async def verify_receipt(request: Request):
     max_age_seconds = 24 * 60 * 60
     is_stale = age_seconds > max_age_seconds
 
+    replay_detected = _check_replay(body["scan_id"])
     valid = signature_valid and not is_stale
 
     return JSONResponse(content={
@@ -259,6 +286,8 @@ async def verify_receipt(request: Request):
         "max_age_seconds": max_age_seconds,
         "stale": is_stale,
         "revoked": False,
+        "replay_detected": replay_detected,
+        "replay_window_seconds": _VERIFY_CACHE_TTL,
     })
 
 
