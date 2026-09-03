@@ -259,7 +259,7 @@ async def verify_receipt(request: Request):
         message = encode_defunct(text=message_str)
         recovered = Account.recover_message(message, signature=signature)
     except Exception as e:
-        return JSONResponse(content={"valid": False, "reason": f"malformed signature: {e}"})
+        return JSONResponse(content={"valid": False, "failure_reason": "unsigned", "reason": f"malformed signature: {e}"})
 
     expected_signer = os.environ.get("ATTESTATION_SIGNER_ADDRESS", "0x963E6bC84fAA5AF0a25CACA6a0B8257B5b78d840")
     signature_valid = recovered.lower() == expected_signer.lower() and recovered.lower() == body["signer"].lower()
@@ -272,10 +272,19 @@ async def verify_receipt(request: Request):
     is_stale = age_seconds > max_age_seconds
 
     replay_detected = _check_replay(body["scan_id"])
-    valid = signature_valid and not is_stale
+    valid = signature_valid and not is_stale and not replay_detected
+
+    failure_reason = None
+    if not signature_valid:
+        failure_reason = "unsigned"
+    elif replay_detected:
+        failure_reason = "replayed"
+    elif is_stale:
+        failure_reason = "expired"
 
     return JSONResponse(content={
         "valid": valid,
+        "failure_reason": failure_reason,
         "signature_valid": signature_valid,
         "signer": recovered if signature_valid else None,
         "signer_key_id": expected_signer,
