@@ -10,7 +10,7 @@ if not os.getenv("PRIMARY_BASE_RPC"):
     os.environ["PRIMARY_BASE_RPC"] = "https://mainnet.base.org"
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 from analyzer import TokenAnalyzer
 
@@ -109,7 +109,7 @@ app.add_middleware(PaymentMiddlewareASGI, routes=x402_routes, server=x402_server
 from fastapi.staticfiles import StaticFiles
 import os
 
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 
 @app.get("/favicon.ico")
 async def favicon():
@@ -333,7 +333,10 @@ async def track_record():
 
 
 @app.get("/", response_class=HTMLResponse)
-async def root():
+async def root(request: Request):
+    host = request.headers.get("host", "")
+    if "agentrisktop.world" in host:
+        return RedirectResponse(url="https://agentrisk.dev", status_code=301)
     with open("static/index.html") as f:
         return f.read()
 
@@ -344,7 +347,7 @@ if __name__ == "__main__":
 
 app.include_router(mcp_server.mcp_router)
 
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, RedirectResponse
 
 @app.get("/llms.txt", response_class=PlainTextResponse)
 async def get_llms_txt():
