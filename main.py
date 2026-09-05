@@ -40,6 +40,7 @@ app.add_middleware(
 PAYMENT_WALLET = "0x42Baa7DEBbB71aFB90f14d0352F0390aE0C35ABB"
 PRICE_USDC = "0.15"
 from x402.extensions.bazaar import declare_discovery_extension, OutputConfig, bazaar_resource_server_extension
+from x402.extensions import declare_builder_code_extension, builder_code_resource_server_extension
 from x402.http import FacilitatorConfig, HTTPFacilitatorClient, PaymentOption
 from x402.http.middleware.fastapi import PaymentMiddlewareASGI
 from x402.http.types import RouteConfig
@@ -58,6 +59,7 @@ x402_facilitator = HTTPFacilitatorClient(
 x402_server = x402ResourceServer(x402_facilitator)
 x402_server.register("eip155:8453", ExactEvmServerScheme())
 x402_server.register_extension(bazaar_resource_server_extension)
+x402_server.register_extension(builder_code_resource_server_extension)
 
 x402_routes: dict[str, RouteConfig] = {
     "GET /scan": RouteConfig(
@@ -72,16 +74,19 @@ x402_routes: dict[str, RouteConfig] = {
         mime_type="application/json",
         description="Detect honeypot, rug pull, scam, and fake tokens on Base before buying or swapping. Pre-trade contract safety check: mint function, blacklist function, transfer pausable, buy/sell tax, ownership renounced, LP locked or burned, holder concentration, deployer wallet history and reputation, brand impersonation. Returns risk score, confidence level, and clear buy/don't-buy verdict for autonomous trading agents on Base.",
         resource="https://agentrisk.dev/scan",
-        extensions=declare_discovery_extension(
-            input={"token": "0x4200000000000000000000000000000000000006"},
-            input_schema={
-                "properties": {"token": {"type": "string", "description": "Base token contract address (0x...)"}},
-                "required": ["token"],
-            },
-            output=OutputConfig(
-                example={"riskScore": 20, "riskLevel": "CAUTION", "shouldExecute": True},
+        extensions={
+            **declare_discovery_extension(
+                input={"token": "0x4200000000000000000000000000000000000006"},
+                input_schema={
+                    "properties": {"token": {"type": "string", "description": "Base token contract address (0x...)"}},
+                    "required": ["token"],
+                },
+                output=OutputConfig(
+                    example={"riskScore": 20, "riskLevel": "CAUTION", "shouldExecute": True},
+                ),
             ),
-        ),
+            **declare_builder_code_extension("bc_3mz75ohr"),
+        },
     ),
     "POST /mcp/tools/check_token_risk": RouteConfig(
         accepts=[
