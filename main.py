@@ -72,7 +72,7 @@ x402_routes: dict[str, RouteConfig] = {
             ),
         ],
         mime_type="application/json",
-        description="Detect honeypot, rug pull, scam, and fake tokens on Base before buying or swapping. Pre-trade contract safety check: mint function, blacklist function, transfer pausable, buy/sell tax, ownership renounced, LP locked or burned, holder concentration, deployer wallet history and reputation, brand impersonation. Returns risk score, confidence level, and clear buy/don't-buy verdict for autonomous trading agents on Base.",
+        description="Pre-trade token risk check on Base for AI agents and autonomous trading bots. Detects honeypots, rug pulls, hidden ownership, mint/blacklist functions, tax traps, deployer wallet reputation, and brand impersonation. Includes live sell simulation across Uniswap V2/V3/V4 and Aerodrome, holder concentration analysis, and a machine-readable risk verdict delivered via x402 and MCP.",
         resource="https://agentrisk.dev/scan",
         extensions={
             **declare_discovery_extension(
@@ -98,7 +98,7 @@ x402_routes: dict[str, RouteConfig] = {
             ),
         ],
         mime_type="application/json",
-        description="Detect honeypot, rug pull, scam, and fake tokens on Base before buying or swapping (MCP tool). Pre-trade contract safety check: mint function, blacklist function, transfer pausable, buy/sell tax, ownership renounced, LP locked or burned, holder concentration, deployer wallet history and reputation, brand impersonation. Returns risk score, confidence level, and clear buy/don't-buy verdict for autonomous trading agents on Base.",
+        description="Pre-trade token risk check on Base for AI agents and autonomous trading bots. Detects honeypots, rug pulls, hidden ownership, mint/blacklist functions, tax traps, deployer wallet reputation, and brand impersonation. Includes live sell simulation across Uniswap V2/V3/V4 and Aerodrome, holder concentration analysis, and a machine-readable risk verdict delivered via x402 and MCP.",
         resource="https://agentrisk.dev/mcp/tools/check_token_risk",
     ),
 }
